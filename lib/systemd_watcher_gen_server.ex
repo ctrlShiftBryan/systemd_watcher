@@ -14,6 +14,10 @@ defmodule SystemdWatcher.GenServer do
     GenServer.call(name, {:get_pid, pid})
   end
 
+  def show_pids(name) do
+    GenServer.call(name, {:show_pids})
+  end
+
   def handle_cast({:add_pid, pid}, state) do
     with nil <- state[:pids][pid] do
       {:noreply, state |> Map.merge(
@@ -34,6 +38,10 @@ defmodule SystemdWatcher.GenServer do
     |> Kernel.-(time)
     |> Kernel./(1_000_000_000)
     |> Kernel.>(state[:timeout])
+  end
+
+  def handle_call({:show_pids}, _from, state) do
+    {:reply, state, state}
   end
 
   def handle_call({:get_pid, pid}, _from, state) do

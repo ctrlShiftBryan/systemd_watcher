@@ -14,9 +14,13 @@ defmodule SystemdWatcher.Mixfile do
   #
   # Type "mix help compile.app" for more information
   def application do
-    [applications: [:logger]]
+    [mod: {SystemdWatcher, []},
+     applications: [:logger]]
   end
 
+  defp aliases do
+    ["test": ["test --no-start"]]
+  end
   # Dependencies can be Hex packages:
   #
   #   {:mydep, "~> 0.3.0"}
@@ -27,6 +31,6 @@ defmodule SystemdWatcher.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    []
+    [{:double, "~> 0.6.0", only: :test}]
   end
 end

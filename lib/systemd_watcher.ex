@@ -1,16 +1,43 @@
 defmodule SystemdWatcher do
-  def sample do
-    input = """
-    Jul 12 20:09:37 mine ethminer[32294]:   m  20:09:37|ethminer  Mining on PoWhash #1029edbe : 31.46MH/s [A0+0:R0+0:F0]
-    Jul 12 20:09:38 mine ethminer[32294]:   m  20:09:38|ethminer  Mining on PoWhash #1029edbe : 31.46MH/s [A0+0:R0+0:F0]
-    Jul 12 20:09:38 mine ethminer[32294]:   m  20:09:38|ethminer  Mining on PoWhash #1029edbe : 31.46MH/s [A0+0:R0+0:F0]
-    Jul 12 20:09:38 mine ethminer[32294]:   m  20:09:38|ethminer  Mining on PoWhash #1029edbe : 31.46MH/s [A0+0:R0+0:F0]
-    Jul 12 20:09:38 mine ethminer[32294]:   m  20:09:38|ethminer  Mining on PoWhash #1029edbe : 31.46MH/s [A0+0:R0+0:F0]
-    Jul 12 20:09:38 mine ethminer[32294]:   m  20:09:38|ethminer  Mining on PoWhash #1029edbe : 31.46MH/s [A0+0:R0+0:F0]
-    Jul 12 20:09:39 mine ethminer[32294]:   m  20:09:39|ethminer  Mining on PoWhash #1029edbe : 31.46MH/s [A0+0:R0+0:F0]
-    Jul 12 20:09:39 mine ethminer[32294]:   m  20:09:39|ethminer  Mining on PoWhash #1029edbe : 31.46MH/s [A0+0:R0+0:F0]
-    Jul 12 20:09:39 mine ethminer[32294]:   m  20:09:39|ethminer  Mining on PoWhash #1029edbe : 26.21MH/s [A0+0:R0+0:F0]
-    """
+  use Application
+  alias SystemdWatcher.GenServer
+
+  require IEx
+  def start(_type, args) do
+    IEx.pry
+    IO.puts "starting...."
+    import Supervisor.Spec
+
+    children = [
+      supervisor(Task.Supervisor, [[name: SystemdWatcher.TaskSupervisor]])
+    ]
+    opts = [strategy: :one_for_one, name: SystemdWatcher.Supervisor]
+    result = Supervisor.start_link(children, opts)
+
+    Task.Supervisor.start_child(SystemdWatcher.TaskSupervisor, fn ->
+      recurse()
+    end)
+
+    SystemdWatcher.GenServer.start_link(:my_pids)
+    result
+  end
+
+  def recurse do
+    check_log()
+    :timer.sleep 10_000
+    recurse()
+  end
+
+  def check_log do
+    for line <-  get_log() |> String.split("\n") do
+      with {:ok, pid, _mhs} <- line |> get_info do
+        GenServer.add_pid(:my_pids, pid)
+      end
+    end
+  end
+
+  def get_log(systemd \\ SystemdWatcher.Commands) do
+    systemd.get_log()
   end
 
   def parse_log(text) do
