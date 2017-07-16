@@ -1,3 +1,7 @@
+defmodule SystemdWatcher.TestDiContainer do
+  defstruct [ commands: SystemdWatcher.Commands ]
+end
+
 defmodule SystemdWatcherTest do
   use ExUnit.Case
   doctest SystemdWatcher
@@ -47,16 +51,10 @@ defmodule SystemdWatcherTest do
     stub = SystemdWatcher.Commands
            |> double
            |> allow(:get_log, fn() -> @input3 end)
-           |> allow(:get_log, fn() -> @input3 end)
-           |> allow(:get_log, fn() -> @input3 end)
-           |> allow(:get_log, fn() -> @input3 end)
-           |> allow(:get_log, fn() -> @input3 end)
-           |> allow(:get_log, fn() -> @input3 end)
-           |> allow(:get_log, fn() -> @input3 end)
-           |> allow(:get_log, fn() -> @input3 end)
-           |> allow(:get_log, fn() -> @input3 end)
            |> allow(:get_log, fn() -> @input4 end)
 
-    assert SystemdWatcher.get_log(stub) == @input3
+    container = %SystemdWatcher.DiContainer{commands: stub}
+    assert SystemdWatcher.get_log(container) == @input3
+    assert SystemdWatcher.get_log(container) == @input4
   end
 end

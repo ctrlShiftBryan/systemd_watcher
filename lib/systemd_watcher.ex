@@ -3,9 +3,15 @@ defmodule SystemdWatcher do
   alias SystemdWatcher.GenServer
 
   require IEx
+
   def start(_type, args) do
-    IEx.pry
+    args = if args == [] do
+             %SystemdWatcher.DiContainer{}
+           end
+
     IO.puts "starting...."
+    IO.inspect args
+
     import Supervisor.Spec
 
     children = [
@@ -15,29 +21,29 @@ defmodule SystemdWatcher do
     result = Supervisor.start_link(children, opts)
 
     Task.Supervisor.start_child(SystemdWatcher.TaskSupervisor, fn ->
-      recurse()
+      recurse(args)
     end)
 
     SystemdWatcher.GenServer.start_link(:my_pids)
     result
   end
 
-  def recurse do
-    check_log()
+  def recurse(container) do
+    check_log(container)
     :timer.sleep 10_000
-    recurse()
+    recurse(container)
   end
 
-  def check_log do
-    for line <-  get_log() |> String.split("\n") do
+  def check_log(container) do
+    for line <-  get_log(container) |> String.split("\n") do
       with {:ok, pid, _mhs} <- line |> get_info do
         GenServer.add_pid(:my_pids, pid)
       end
     end
   end
 
-  def get_log(systemd \\ SystemdWatcher.Commands) do
-    systemd.get_log()
+  def get_log(container) do
+    container.commands.get_log()
   end
 
   def parse_log(text) do
