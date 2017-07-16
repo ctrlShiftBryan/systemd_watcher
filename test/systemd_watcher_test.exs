@@ -6,7 +6,7 @@ defmodule SystemdWatcherTest do
   use ExUnit.Case
   doctest SystemdWatcher
   import Double
-
+  require IEx
 
   @input  "Jul 12 20:09:37 mine ethminer[32294]:   m  20:09:37|ethminer  Mining on PoWhash #1029edbe : 31.46MH/s [A0+0:R0+0:F0]"
   @input2 "Jul 12 20:09:37 mine ethmine[32294]:   m  20:09:37|ethminer  Mining on PoWhash #1029edbe : 31.46MH/s [A0+0:R0+0:F0]"
