@@ -1,7 +1,7 @@
 defmodule SystemdWatcher.GenServer do
   use GenServer
 
-  def start_link(name, options \\ %{timeout: 30}) do
+  def start_link(name, options \\ %{timeout: 1}) do
     init_state = options |> Map.merge(%{pids: %{}})
     GenServer.start_link(__MODULE__, init_state, name: name)
   end
@@ -20,14 +20,10 @@ defmodule SystemdWatcher.GenServer do
 
   def handle_cast({:add_pid, pid}, state) do
     with nil <- state[:pids][pid] do
-      {:noreply, state |> Map.merge(
-        %{pids:
-          %{pid =>
-            %{mhs: 0,
-              time: System.monotonic_time}
-          }
-        }
-      )}
+      new_pids = state[:pids]
+                 |> Map.merge(%{pid => %{mhs: 0, time: System.monotonic_time}})
+
+      {:noreply, state |> Map.merge(%{pids: new_pids})}
     else
       _ -> {:noreply, state}
     end

@@ -1,18 +1,19 @@
 defmodule SystemdWatcher do
   use Application
   alias SystemdWatcher.GenServer
+  import Supervisor.Spec
 
   require IEx
+
+  @check_interval Application.get_env(:systemd_watcher, :check_interval)
 
   def start(_type, args) do
     args = if args == [] do
              %SystemdWatcher.DiContainer{}
+           else
+             args
            end
 
-    IO.puts "starting...."
-    IO.inspect args
-
-    import Supervisor.Spec
 
     children = [
       supervisor(Task.Supervisor, [[name: SystemdWatcher.TaskSupervisor]])
@@ -30,7 +31,7 @@ defmodule SystemdWatcher do
 
   def recurse(container) do
     check_log(container)
-    :timer.sleep 10_000
+    :timer.sleep(@check_interval)
     recurse(container)
   end
 
