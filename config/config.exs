@@ -10,7 +10,9 @@ use Mix.Config
 
 # You can configure for your application as:
 #
-config :systemd_watcher, check_interval: 10_000
+config :systemd_watcher,
+  check_interval: 10_000,
+  timeout: 30
 #
 # And access this configuration in your application as:
 #

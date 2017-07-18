@@ -1,13 +1,15 @@
 defmodule SystemdWatcher.GenServer do
   use GenServer
 
-  def start_link(name, options \\ %{timeout: 4}) do
+  @timeout Application.get_env(:systemd_watcher, :timeout)
+
+  def start_link(name, options \\ %{timeout: @timeout}) do
     init_state = options |> Map.merge(%{pids: %{}})
     GenServer.start_link(__MODULE__, init_state, name: name)
   end
 
-  def add_pid(name, pid) do
-    GenServer.cast(name, {:add_pid, pid})
+  def add_pid(name, {pid, mhs}) do
+    GenServer.cast(name, {:add_pid, {pid, mhs}})
   end
 
   def get_pid(name, pid) do
@@ -18,9 +20,9 @@ defmodule SystemdWatcher.GenServer do
     GenServer.call(name, {:show_pids})
   end
 
-  def handle_cast({:add_pid, pid}, state) do
+  def handle_cast({:add_pid, {pid, mhs}}, state) do
     new_pids = state[:pids]
-               |> Map.merge(%{pid => %{mhs: 0, time: System.monotonic_time}})
+               |> Map.merge(%{pid => %{mhs: mhs, time: System.monotonic_time}})
 
     {:noreply, state |> Map.merge(%{pids: new_pids})}
   end
@@ -39,7 +41,7 @@ defmodule SystemdWatcher.GenServer do
   #           "5" => %{mhs: 0, time: -576460749236351546}}, timeout: 5}
   require IEx
   def purge_state(state) do
-    rejects = for {key , %{mhs: mhs, time: time}}  <- state[:pids] do
+    rejects = for {key , %{mhs: _mhs, time: time}}  <- state[:pids] do
       if time |> too_old(state)do
         key
       end

@@ -37,8 +37,8 @@ defmodule SystemdWatcher do
 
   def check_log(container) do
     for line <-  get_log(container) |> String.split("\n") do
-      with {:ok, pid, _mhs} <- line |> get_info do
-        GenServer.add_pid(:my_pids, pid)
+      with {:ok, pid, mhs} <- line |> get_info do
+        GenServer.add_pid(:my_pids, {pid, mhs})
       end
     end
   end
